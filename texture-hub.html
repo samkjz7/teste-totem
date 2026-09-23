@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luna Hub - Texture Packs</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --dark-space: #0A0A10; --deep-purple: #7B42F6; --light-purple: #A78BFA;
+            --glow-color: rgba(123, 66, 246, 0.2); --glass-bg: rgba(18, 18, 28, 0.6);
+            --border-color: rgba(123, 66, 246, 0.2); --text-primary: #EDE9FE; --text-secondary: #A1A1AA;
+            --input-bg: rgba(30, 30, 45, 0.7); --card-bg: rgba(22, 22, 34, 0.7);
+            --transition-fast: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --gold-color: #FFD700;
+            --mf-color: #0077D7; /* Cor MediaFire */
+            --gd-color: #1FA463; /* Cor Google Drive */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Manrope', sans-serif; background-color: var(--dark-space); color: var(--text-primary);
+            min-height: 100vh; padding: clamp(15px, 4vw, 40px);
+            background-image: radial-gradient(ellipse 40% 50% at 20% 0%, var(--glow-color), transparent),
+                              radial-gradient(ellipse 40% 50% at 80% 100%, var(--glow-color), transparent);
+            background-attachment: fixed; overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: var(--dark-space); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--deep-purple); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--light-purple); }
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.8s 0.2s backwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { font-size: clamp(2.5rem, 8vw, 3.5rem); font-weight: 800; letter-spacing: -1.5px; background: linear-gradient(90deg, #FFFFFF, #D1C4E9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header h1 span { background: linear-gradient(90deg, var(--light-purple), var(--deep-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: var(--text-secondary); margin-top: 8px; font-size: clamp(0.9rem, 2vw, 1.1rem); }
+        
+        .controls-bar { 
+            display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 40px; 
+            background: var(--glass-bg); backdrop-filter: blur(10px); 
+            padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); 
+            position: sticky; top: 20px; z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-box { flex-grow: 1; position: relative; }
+        .search-input { width: 100%; padding: 14px 14px 14px 45px; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); font-size: 1rem; font-family: 'Manrope', sans-serif; transition: var(--transition-fast); }
+        .search-input:focus { outline: none; border-color: var(--light-purple); box-shadow: 0 0 15px var(--glow-color); }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; }
+        .filter-select, #showFavoritesBtn { padding: 14px 20px; background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 12px; font-size: 0.9rem; font-family: 'Manrope', sans-serif; outline: none; cursor: pointer; transition: var(--transition-fast); }
+        #showFavoritesBtn { display: flex; align-items: center; gap: 8px; }
+        #showFavoritesBtn.active { background-color: var(--deep-purple); border-color: var(--deep-purple); }
+        select.filter-select {
+             padding-right: 40px; appearance: none;
+             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A1A1AA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+             background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;
+        }
+        .filter-select:focus, #showFavoritesBtn:focus { border-color: var(--light-purple); }
+        .texture-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .texture-card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; transition: var(--transition-fast); cursor: pointer; animation: cardEnter 0.5s ease forwards; opacity: 0; position: relative; }
+        
+        .texture-card.boosted { border-color: var(--gold-color); box-shadow: 0 0 15px rgba(255, 215, 0, 0.15); }
+        .texture-card.boosted:hover { border-color: var(--gold-color); box-shadow: 0 0 25px rgba(255, 215, 0, 0.3); transform: translateY(-8px) scale(1.02); }
+        .texture-card.boosted .card-title { color: var(--gold-color); }
+
+        @keyframes cardEnter { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .texture-card:hover { transform: translateY(-8px); border-color: var(--light-purple); box-shadow: 0 0 25px var(--glow-color); }
+        .card-image-container { height: 180px; overflow: hidden; }
+        .card-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+        .texture-card:hover .card-image { transform: scale(1.05); }
+
+        .favorite-btn {
+            position: absolute; top: 10px; right: 10px; z-index: 2;
+            background: rgba(10, 10, 16, 0.6); backdrop-filter: blur(5px);
+            border: 1px solid var(--border-color); border-radius: 50%;
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary); font-size: 1rem; cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .favorite-btn:hover { transform: scale(1.1); color: var(--text-primary); border-color: var(--light-purple); }
+        .favorite-btn.favorited { color: var(--gold-color); }
+
+        .card-content { padding: 20px; }
+        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-stats { display: flex; gap: 20px; color: var(--text-secondary); font-size: 0.85rem; }
+        .stat-item { display: flex; align-items: center; gap: 6px; }
+        .stat-item i { color: var(--light-purple); }
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 50px; color: var(--text-secondary); }
+        .empty-state i { font-size: 4rem; color: var(--deep-purple); margin-bottom: 20px; }
+        .empty-state h3 { font-size: 1.5rem; color: var(--text-primary); }
+        
+        .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.8);align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease}.modal.active{display:flex;opacity:1}.modal-content{background:var(--glass-bg);backdrop-filter:blur(15px);width:90%;max-width:800px;max-height:90vh;border-radius:24px;border:1px solid var(--border-color);box-shadow:0 10px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;transform:scale(.95);transition:transform .3s ease}.modal.active .modal-content{transform:scale(1)}.modal-header{padding:20px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color)}.modal-title-wrapper{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.modal-title{font-size:1.5rem;font-weight:700}.modal-author{font-size:.9rem;font-weight:500;color:var(--text-secondary)}.modal-close{background:0 0;border:none;font-size:2rem;color:var(--text-secondary);cursor:pointer;transition:color .3s,transform .3s}.modal-close:hover{color:var(--light-purple);transform:rotate(90deg)}.modal-body{padding:30px;overflow-y:auto;flex-grow:1}.modal-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:25px}.gallery-item{width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--border-color);background-color:var(--input-bg);cursor:pointer}.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .3s ease}.gallery-item:hover img{transform:scale(1.05)}.modal-description{color:var(--text-secondary);line-height:1.7}.discord-link{color:var(--light-purple);text-decoration:none;font-weight:600}.discord-link:hover{text-decoration:underline}
+        
+        /* ESTILO DOS BOTÕES DE DOWNLOAD */
+        .modal-footer{padding:20px 30px;border-top:1px solid var(--border-color);display:flex;gap:10px}.download-wrapper{position:relative;width:100%}.download-button-group{display:flex;background:rgba(0,0,0,0.2);border-radius:12px;overflow:hidden;transition:var(--transition-fast);border:1px solid var(--border-color)}.download-buttons-container { flex-grow: 1; display: flex; }
+        
+        .download-btn { flex: 1; padding: 16px; color: #fff; font-size: 1rem; font-weight: 700; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.2s ease; border: none; cursor: pointer; }
+        .download-btn:first-child { border-right: 1px solid rgba(0,0,0,0.1); }
+        .download-btn:hover { filter: brightness(1.1); }
+        .download-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; background: #333 !important; }
+        
+        .btn-mf { background-color: var(--mf-color); }
+        .btn-gd { background-color: var(--gd-color); }
+
+        .version-separator{width:1px;background-color:var(--border-color);flex-shrink:0}.version-btn{background:var(--input-bg);color:var(--text-primary);border:none;padding:0 18px;cursor:pointer;transition:background-color .2s ease;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center}.version-btn:hover{background-color:var(--deep-purple)}.version-btn i{transition:transform .3s ease}.version-btn.active i{transform:rotate(180deg)}.version-dropdown{position:absolute;bottom:100%;right:0;margin-bottom:10px;background:var(--input-bg);border:1px solid var(--border-color);border-radius:12px;list-style:none;padding:8px;min-width:150px;z-index:10;opacity:0;transform:translateY(10px);pointer-events:none;transition:all .3s ease}.version-dropdown.active{opacity:1;transform:translateY(0);pointer-events:auto}.version-dropdown li{color:var(--text-primary);padding:10px 15px;border-radius:8px;cursor:pointer;transition:background-color .2s ease}.version-dropdown li:hover{background-color:var(--deep-purple)}.code-block{display:flex;align-items:center;gap:10px;background-color:var(--input-bg);padding:15px;border-radius:8px;margin-top:15px}.code-block code{flex-grow:1;color:var(--text-primary);font-family:monospace}.code-block button{background:var(--light-purple);color:var(--dark-space);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600}.lightbox{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:9998;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease}.lightbox.active{display:flex;opacity:1}.lightbox-content{max-width:85vw;max-height:85vh;border-radius:12px;box-shadow:0 0 40px rgba(0,0,0,.5);transform:scale(.95);transition:transform .3s ease}.lightbox.active .lightbox-content{transform:scale(1)}.lightbox-close{position:absolute;top:25px;right:35px;color:#fff;font-size:3rem;font-weight:300;cursor:pointer;transition:transform .3s ease}.lightbox-close:hover{transform:scale(1.1)}.page-transition{position:fixed;top:0;left:0;width:100%;height:100%;background-color:var(--deep-purple);z-index:9999;transform-origin:bottom;pointer-events:none}.page-transition.animate-in{transform:scaleY(1);animation:slideIn .5s ease-in-out forwards}.page-transition.animate-out{transform:scaleY(0);animation:slideOut .5s ease-in-out forwards}@keyframes slideIn{from{transform:scaleY(1);transform-origin:top}to{transform:scaleY(0);transform-origin:top}}@keyframes slideOut{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1);transform-origin:bottom}}.back-to-hub{position:fixed;bottom:25px;left:25px;background:var(--deep-purple);color:var(--text-primary);padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:600;z-index:1001;box-shadow:0 0 20px var(--glow-color);transition:all .3s ease;display:flex;align-items:center;gap:8px}.back-to-hub:hover{transform:translateY(-3px);box-shadow:0 0 30px rgba(123, 66, 246, 0.6)}.social-links{position:fixed;bottom:25px;right:25px;display:flex;flex-direction:column;gap:15px;z-index:1000}.social-icon{display:flex;align-items:center;justify-content:center;width:50px;height:50px;background:var(--card-bg);border:1px solid var(--border-color);border-radius:50%;color:var(--text-secondary);font-size:1.5rem;text-decoration:none;transition:var(--transition-fast);backdrop-filter:blur(10px)}.social-icon:hover{color:var(--text-primary);background-color:var(--deep-purple);transform:translateY(-5px);box-shadow:0 0 20px var(--glow-color);border-color:var(--light-purple)}@media (max-width:768px){.controls-bar{flex-direction:column; position: sticky; top: 10px;}.download-buttons-container { flex-direction: column; }.download-btn:first-child{border-right:none;border-bottom:1px solid rgba(0,0,0,0.1);}}@media (max-width:480px){body{padding:clamp(15px,4vw,20px)}.header h1{font-size:clamp(2.2rem,8vw,3rem)}.modal-content{max-height:95vh}.modal-body{padding:20px}.modal-title{font-size:1.3rem}.back-to-hub{padding:10px 15px;font-size:.9rem;bottom:15px;left:15px}.social-links{bottom:15px;right:15px;gap:12px}.social-icon{width:45px;height:45px;font-size:1.3rem}}
+    </style>
+</head>
+<body>
+    <div class="page-transition" id="pageTransition"></div>
+    <a href="index.html" class="back-to-hub nav-link"><i class="fas fa-arrow-left"></i> Voltar ao Hub</a>
+    <div class="container">
+        <header class="header"><h1>Texture <span>Hub</span></h1><p>Descubra as melhores texturas para transformar seu mundo no Minecraft.</p></header>
+        <div class="controls-bar">
+            <div class="search-box"> <i class="fas fa-search"></i> <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nome..."> </div>
+            <button id="showFavoritesBtn"><i class="fas fa-star"></i> <span>Meus Favoritos</span></button>
+            <select id="resolutionFilter" class="filter-select">
+                <option value="">Todas as Resoluções</option> <option value="16x">16x</option> <option value="32x">32x</option> <option value="64x">64x</option>
+                <option value="128x">128x</option> <option value="256x">256x</option> <option value="512x">512x+</option>
+            </select>
+            <select id="sortBy" class="filter-select">
+                <option value="popular">Populares (Padrão)</option>
+                <option value="newest">Mais Recentes</option>
+                <option value="name">Nome (A-Z)</option>
+                <option value="size">Tamanho (Maior > Menor)</option>
+            </select>
+        </div>
+        <main class="texture-grid" id="textureGrid"><div class="empty-state"> <i class="fas fa-spinner fa-spin"></i> <h3>Carregando texturas...</h3> </div></main>
+    </div>
+    
+    <div class="modal" id="textureModal"><div class="modal-content"><div class="modal-header"><div class="modal-title-wrapper"><h2 class="modal-title" id="modalTitle"></h2><span class="modal-author" id="modalAuthor"></span></div><button class="modal-close" id="modalClose">&times;</button></div><div class="modal-body"><div class="modal-gallery" id="modalGallery"></div><p class="modal-description" id="modalDescription"></p></div>
+    
+    <div class="modal-footer">
+        <div class="download-wrapper" id="downloadWrapper">
+            <div class="download-button-group">
+                <div class="download-buttons-container">
+                    <a href="#" id="btnMediaFire" class="download-btn btn-mf"><i class="fas fa-cloud-download-alt"></i> MediaFire</a>
+                    <a href="#" id="btnDrive" class="download-btn btn-gd"><i class="fab fa-google-drive"></i> Drive</a>
+                </div>
+                <div class="version-separator" id="versionSeparator"></div>
+                <button class="version-btn" id="versionBtn"><i class="fas fa-chevron-down"></i> <span id="currentVersionLabel" style="margin-left:5px; font-size: 0.8em;"></span></button>
+            </div>
+            <ul class="version-dropdown" id="versionDropdown"></ul>
+        </div>
+    </div>
+    </div></div>
+
+    <div class="modal" id="restrictionModal"><div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h2 class="modal-title">🔒 Conteúdo Restrito</h2><button class="modal-close" id="restrictionModalClose">&times;</button></div><div class="modal-body"><p>O download deste conteúdo é gerenciado através do nosso servidor.</p><p style="margin-top: 15px;">Para obter o link, entre no nosso <a href="https://discord.gg/xSgM9BbD9p" class="discord-link" target="_blank">servidor do Discord</a>, vá ao canal <strong>#downloads</strong> e envie a mensagem:</p><div class="code-block"><code id="restrictionCode"></code><button id="copyCodeBtn"><i class="fas fa-copy"></i> Copiar</button></div></div></div></div>
+    
+    <div class="lightbox" id="imageLightbox"><span class="lightbox-close" id="lightboxClose">&times;</span><img class="lightbox-content" id="lightboxImage" src="" alt="Imagem Ampliada"></div>
+    <div class="social-links"><a href="https://www.tiktok.com/@spiritmcp" target="_blank" rel="noopener noreferrer" class="social-icon" title="TikTok"><i class="fab fa-tiktok"></i></a><a href="https://discord.gg/xSgM9BbD9p" class="social-icon" title="Discord"><i class="fab fa-discord"></i></a></div>
+
+    <script>
+        let texturePacksData = [], isShowingFavorites = false;
+        
+        // --- OTIMIZAÇÃO: Variáveis para Infinite Scroll ---
+        let currentFilteredPacks = [];
+        let currentBatchIndex = 0;
+        const BATCH_SIZE = 24;
+        
+        const textureGrid = document.getElementById('textureGrid'), searchInput = document.getElementById('searchInput'),
+              resolutionFilter = document.getElementById('resolutionFilter'), sortBy = document.getElementById('sortBy'),
+              showFavoritesBtn = document.getElementById('showFavoritesBtn'), modal = document.getElementById('textureModal'),
+              modalTitle = document.getElementById('modalTitle'), modalAuthor = document.getElementById('modalAuthor'),
+              modalGallery = document.getElementById('modalGallery'), modalDescription = document.getElementById('modalDescription'),
+              downloadWrapper = document.getElementById('downloadWrapper'), 
+              btnMediaFire = document.getElementById('btnMediaFire'), btnDrive = document.getElementById('btnDrive'),
+              versionSeparator = document.getElementById('versionSeparator'), versionBtn = document.getElementById('versionBtn'),
+              versionDropdown = document.getElementById('versionDropdown'), modalClose = document.getElementById('modalClose'),
+              currentVersionLabel = document.getElementById('currentVersionLabel'),
+              imageLightbox = document.getElementById('imageLightbox'), lightboxImage = document.getElementById('lightboxImage'),
+              lightboxClose = document.getElementById('lightboxClose'), restrictionModal = document.getElementById('restrictionModal'),
+              restrictionCode = document.getElementById('restrictionCode'), copyCodeBtn = document.getElementById('copyCodeBtn'),
+              restrictionModalClose = document.getElementById('restrictionModalClose');
+
+        const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3E%3Crect width='300' height='180' fill='%232a2a3a'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Manrope, sans-serif' font-size='14' fill='%23A1A1AA'%3EImagem n%C3%A3o encontrada%3C/text%3E%3C/svg%3E";
+
+        // --- FUNÇÃO PARA URL AMIGÁVEL ---
+        const createSlug = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+        const isDriveLink = url => !!url && /drive\.google\.com|googleusercontent\.com/i.test(url);
+        const isMediafireLink = url => !!url && /mediafire\.com/i.test(url);
+
+        function extractMainLinks(pack) {
+            const raw = pack.downloadLink || null;
+            const drive = pack.downloadLink_gd || pack.downloadLink_drive || (isDriveLink(raw) ? raw : null);
+            const media = pack.downloadLink_mediafire || pack.downloadLink_mf || (isMediafireLink(raw) ? raw : null);
+            const fallback = (!drive && !media) ? raw : null;
+            return { drive, media, fallback };
+        }
+
+        function extractVersionLinks(pack) {
+            return {
+                drive: pack.version_links_gd || pack.version_links_drive || pack.version_links || [],
+                media: pack.version_links_mediafire || pack.version_links_mf || []
+            };
+        }
+
+        const getFavorites = () => JSON.parse(localStorage.getItem('favoriteTextures')) || [];
+        const saveFavorites = ids => localStorage.setItem('favoriteTextures', JSON.stringify(ids));
+        const isFavorite = id => getFavorites().includes(id);
+
+        function toggleFavorite(id) {
+            let favorites = getFavorites();
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(favId => favId !== id);
+            } else {
+                favorites.push(id);
+            }
+            saveFavorites(favorites);
+            filterAndSortPacks();
+        }
+
+        function loadMorePacks() {
+            if (currentBatchIndex >= currentFilteredPacks.length) return;
+
+            const batch = currentFilteredPacks.slice(currentBatchIndex, currentBatchIndex + BATCH_SIZE);
+            
+            if (currentBatchIndex === 0) {
+                 textureGrid.innerHTML = '';
+                 if (batch.length === 0) {
+                    const message = isShowingFavorites 
+                        ? `<h3>Você ainda não tem favoritos</h3><p>Clique na estrela de uma textura para adicioná-la aqui.</p>`
+                        : `<h3>Nenhuma textura encontrada</h3><p>Tente ajustar seus filtros ou busca.</p>`;
+                    textureGrid.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i>${message}</div>`;
+                    return;
+                }
+            }
+
+            batch.forEach((pack, i) => {
+                const card = document.createElement('div');
+                card.className = `texture-card ${pack.boosted ? 'boosted' : ''}`;
+                card.style.animationDelay = `${(i % BATCH_SIZE) * 0.05}s`;
+                
+                const isFav = isFavorite(pack.id);
+                card.innerHTML = `
+                    <button class="favorite-btn ${isFav ? 'favorited' : ''}" data-id="${pack.id}" title="Favoritar">
+                        <i class="fas fa-star"></i>
+                    </button>
+                    <div class="card-image-container"><img src="${pack.coverImage}" alt="${pack.name}" class="card-image" loading="lazy" onerror="this.src='${placeholderImage}'"></div>
+                    <div class="card-content">
+                        <h3 class="card-title">${pack.name}</h3>
+                        <div class="card-stats">
+                            <div class="stat-item"><i class="fas fa-layer-group"></i><span>${pack.resolution}</span></div>
+                            <div class="stat-item"><i class="fas fa-file-archive"></i><span>${pack.size} ${pack.size_type}</span></div>
+                        </div>
+                    </div>`;
+                card.addEventListener('click', (e) => {
+                    // ATUALIZAÇÃO: Passa 'true' para atualizar a URL ao abrir
+                    if (!e.target.closest('.favorite-btn')) openModal(pack, true);
+                });
+                textureGrid.appendChild(card);
+            });
+
+            currentBatchIndex += BATCH_SIZE;
+        }
+        
+        function parseDescription(text) { return text ? text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, `<a href="$2" target="_blank" rel="noopener noreferrer" class="discord-link">$1</a>`) : ''; }
+        
+        const defaultDownloadContent = {
+            mf: btnMediaFire.innerHTML,
+            gd: btnDrive.innerHTML
+        };
+
+        function updateDownloadButtons(linkMF, linkGD, restricted, code) {
+            const isRestricted = restricted === true || restricted === "true";
+            const accessCode = code || '';
+
+            [btnMediaFire, btnDrive].forEach(btn => {
+                btn.dataset.restricted = isRestricted ? "true" : "false";
+                btn.dataset.code = accessCode;
+                btn.classList.remove('disabled');
+            });
+
+            if (isRestricted) {
+                btnMediaFire.style.display = 'flex';
+                btnDrive.style.display = 'flex';
+                btnMediaFire.href = '#';
+                btnDrive.href = '#';
+                btnMediaFire.innerHTML = defaultDownloadContent.mf;
+                btnDrive.innerHTML = defaultDownloadContent.gd;
+                return;
+            }
+
+            btnMediaFire.innerHTML = defaultDownloadContent.mf;
+            btnDrive.innerHTML = defaultDownloadContent.gd;
+
+            if (linkMF) {
+                btnMediaFire.style.display = 'flex';
+                btnMediaFire.href = linkMF;
+            } else {
+                btnMediaFire.style.display = 'none';
+                btnMediaFire.href = '#';
+            }
+
+            if (linkGD) {
+                btnDrive.style.display = 'flex';
+                btnDrive.href = linkGD;
+            } else {
+                btnDrive.style.display = 'none';
+                btnDrive.href = '#';
+            }
+
+            if (!linkMF && !linkGD) {
+                btnMediaFire.style.display = 'flex';
+                btnMediaFire.innerHTML = '<i class="fas fa-ban"></i> Link indisponivel';
+                btnMediaFire.classList.add('disabled');
+            }
+        }
+
+        function setupVersionSelector(pack) {
+            versionDropdown.innerHTML='';
+            [versionDropdown, versionBtn].forEach(e => e.classList.remove("active"));
+            
+            const hasVersions = pack.versions?.length > 0;
+            
+            if(hasVersions){
+                versionSeparator.style.display="block";
+                versionBtn.style.display="flex";
+                
+                const mainLinks = extractMainLinks(pack);
+                const versionLinks = extractVersionLinks(pack);
+
+                const versionsData = pack.versions.map((v, t) => ({
+                    version: v,
+                    link_mf: pack.restricted ? null : (versionLinks.media?.[t] || mainLinks.media || null),
+                    link_gd: pack.restricted ? null : (versionLinks.drive?.[t] || mainLinks.drive || mainLinks.fallback || null),
+                    code: pack.restricted ? (pack.restricted_codes?.[t] || pack.restricted_codes?.[0] || '') : null
+                })).sort((e, t) => t.version.localeCompare(e.version, void 0, {numeric:!0, sensitivity:"base"}));
+
+                const latest = versionsData[0];
+                currentVersionLabel.textContent = `v${latest.version}`;
+                updateDownloadButtons(latest.link_mf, latest.link_gd, pack.restricted, latest.code);
+
+                versionsData.forEach(item => {
+                    const li = document.createElement("li");
+                    li.textContent = `v${item.version.replace(/-/g," ")}`;
+                    li.dataset.link_mf = item.link_mf || "";
+                    li.dataset.link_gd = item.link_gd || "";
+                    li.dataset.restricted = pack.restricted;
+                    li.dataset.code = item.code;
+                    versionDropdown.appendChild(li);
+                });
+            } else {
+                versionSeparator.style.display = "none";
+                versionBtn.style.display = "none";
+                currentVersionLabel.textContent = "";
+                
+                const mainLinks = extractMainLinks(pack);
+                const linkMF = pack.restricted ? null : (mainLinks.media || null);
+                const linkGD = pack.restricted ? null : (mainLinks.drive || mainLinks.fallback || null);
+                const code = pack.restricted ? (pack.restricted_codes?.[0] || "") : null;
+                
+                updateDownloadButtons(linkMF, linkGD, pack.restricted, code);
+            }
+        }
+
+        // --- ATUALIZAÇÃO: openModal aceita updateUrl ---
+        function openModal(pack, updateUrl = false) {
+            modalTitle.textContent = pack.name; modalAuthor.textContent = pack.author ? `por ${pack.author}` : '';
+            modalDescription.innerHTML = parseDescription(pack.description);
+            modalGallery.innerHTML = '';
+            if (pack.gallery?.length) {
+                pack.gallery.forEach(url => {
+                    const item = document.createElement('div'); item.className = 'gallery-item';
+                    const img = document.createElement('img'); img.src = url; img.alt = `Imagem de ${pack.name}`;
+                    img.loading = "lazy"; img.onerror = () => img.src = placeholderImage;
+                    item.appendChild(img); modalGallery.appendChild(item);
+                });
+            }
+            setupVersionSelector(pack); 
+            modal.classList.add('active'); 
+            document.body.style.overflow = 'hidden';
+
+            // Atualiza a URL na barra de endereços
+            if (updateUrl) {
+                const slug = createSlug(pack.name);
+                const newUrl = `${window.location.pathname}?texture=${slug}`;
+                window.history.pushState({ packId: pack.id, slug: slug }, '', newUrl);
+            }
+        }
+
+        // --- ATUALIZAÇÃO: closeModal limpa a URL se necessário ---
+        function closeModal(fromHistory = false) { 
+            modal.classList.remove('active'); 
+            document.body.style.overflow = ''; 
+            closeLightbox();
+            
+            // Se fechou pelo botão X ou clique fora, limpa a URL
+            if (!fromHistory) {
+                window.history.pushState({}, '', window.location.pathname);
+            }
+        }
+
+        function openLightbox(src) { lightboxImage.src = src; imageLightbox.classList.add('active'); }
+        function closeLightbox() { imageLightbox.classList.remove('active'); }
+        function openRestrictionModal(code) { restrictionCode.textContent = code; restrictionModal.classList.add('active'); }
+        function closeRestrictionModal() { restrictionModal.classList.remove('active'); }
+
+        function filterAndSortPacks() {
+            let basePacks = isShowingFavorites ? texturePacksData.filter(p => isFavorite(p.id)) : texturePacksData;
+            let filtered = basePacks.filter(p => 
+                (searchInput.value ? p.name.toLowerCase().includes(searchInput.value.toLowerCase()) : true) &&
+                (resolutionFilter.value ? p.resolution === resolutionFilter.value : true)
+            );
+            const boosted = filtered.filter(p => p.boosted).sort((a,b) => a.id - b.id);
+            const regular = filtered.filter(p => !p.boosted);
+            const sortOption = sortBy.value;
+            switch(sortOption) {
+                case 'newest': regular.sort((a, b) => b.id - a.id); break;
+                case 'name': regular.sort((a, b) => a.name.localeCompare(b.name)); break;
+                case 'size': regular.sort((a, b) => (b.size_type === 'MB' ? b.size * 1024 : b.size) - (a.size_type === 'MB' ? a.size * 1024 : a.size)); break;
+                case 'popular': default: regular.sort((a, b) => a.id - b.id); break;
+            }
+            
+            currentFilteredPacks = [...boosted, ...regular];
+            currentBatchIndex = 0;
+            loadMorePacks(); 
+        }
+        
+        window.addEventListener('scroll', () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                loadMorePacks();
+            }
+        });
+        
+        // --- ATUALIZAÇÃO: Listener para o botão Voltar do navegador ---
+        window.addEventListener('popstate', (event) => {
+            if (modal.classList.contains('active')) {
+                // Se modal aberto e usuário clica voltar, fecha modal
+                closeModal(true); 
+            } else {
+                // Se modal fechado e usuário avança para URL com textura
+                const urlParams = new URLSearchParams(window.location.search);
+                const textureSlug = urlParams.get('texture');
+                if (textureSlug && texturePacksData.length > 0) {
+                    const pack = texturePacksData.find(p => createSlug(p.name) === textureSlug);
+                    if (pack) openModal(pack, false);
+                }
+            }
+        });
+
+        showFavoritesBtn.addEventListener('click', () => {
+            isShowingFavorites = !isShowingFavorites;
+            showFavoritesBtn.classList.toggle('active', isShowingFavorites);
+            showFavoritesBtn.querySelector('span').textContent = isShowingFavorites ? 'Ver Todos' : 'Meus Favoritos';
+            filterAndSortPacks();
+        });
+        textureGrid.addEventListener('click', (e) => {
+            const favBtn = e.target.closest('.favorite-btn');
+            if (favBtn) { e.stopPropagation(); toggleFavorite(parseInt(favBtn.dataset.id)); }
+        });
+
+        downloadWrapper.addEventListener('click', e => {
+            const btnDownload = e.target.closest(".download-btn");
+            const btnVersion = e.target.closest("#versionBtn");
+            const liVersion = e.target.closest("li");
+
+            if (btnVersion) {
+                e.stopPropagation();
+                versionDropdown.classList.toggle("active");
+                versionBtn.classList.toggle("active");
+                return;
+            }
+
+            if (liVersion) {
+                const linkMF = liVersion.dataset.link_mf || null;
+                const linkGD = liVersion.dataset.link_gd || null;
+                const restricted = liVersion.dataset.restricted;
+                const code = liVersion.dataset.code;
+                
+                updateDownloadButtons(linkMF, linkGD, restricted, code);
+                currentVersionLabel.textContent = liVersion.textContent;
+                
+                versionDropdown.classList.remove("active");
+                versionBtn.classList.remove("active");
+                return;
+            }
+
+            if (btnDownload) {
+                if(btnDownload.classList.contains('disabled')) { e.preventDefault(); return; }
+                if (btnDownload.dataset.restricted === "true") {
+                    e.preventDefault();
+                    openRestrictionModal(btnDownload.dataset.code);
+                }
+            }
+        });
+
+        copyCodeBtn.addEventListener('click',()=>{navigator.clipboard.writeText(restrictionCode.textContent).then(()=>{copyCodeBtn.innerHTML='<i class="fas fa-check"></i> Copiado!',setTimeout(()=>copyCodeBtn.innerHTML='<i class="fas fa-copy"></i> Copiar',2e3)})});
+        modalGallery.addEventListener('click', e => { if (e.target.tagName === 'IMG') openLightbox(e.target.src); });
+        lightboxClose.addEventListener('click', closeLightbox);
+        imageLightbox.addEventListener('click', e => { if (e.target === imageLightbox) closeLightbox(); });
+        restrictionModalClose.addEventListener('click', closeRestrictionModal);
+        restrictionModal.addEventListener('click', e => { if (e.target === restrictionModal) closeRestrictionModal(); });
+        
+        const pageTransition = document.getElementById('pageTransition');
+        window.addEventListener('load', () => pageTransition.classList.add('animate-in'));
+        document.querySelectorAll('.nav-link').forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); const dest = link.href; pageTransition.classList.add('animate-out'); setTimeout(() => window.location.href = dest, 500); }); });
+        
+        async function initialize() {
+            try {
+                const res = await fetch(`textures.json?v=${new Date().getTime()}`);
+                if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+                texturePacksData = await res.json();
+                
+                [searchInput, resolutionFilter, sortBy].forEach(el => el.addEventListener('input', filterAndSortPacks));
+                
+                // Atualizado para fechar limpando URL
+                modalClose.addEventListener('click', () => closeModal(false));
+                modal.addEventListener('click', e => { if (e.target === modal) closeModal(false); });
+                
+                window.addEventListener('click', e => { if (!e.target.closest('.download-wrapper')) { versionDropdown.classList.remove('active'); versionBtn.classList.remove('active'); } });
+                window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (restrictionModal.classList.contains('active')) closeRestrictionModal(); else if (imageLightbox.classList.contains('active')) closeLightbox(); else if (modal.classList.contains('active')) closeModal(false); } });
+                
+                filterAndSortPacks();
+
+                // --- ATUALIZAÇÃO: Checagem de URL ao carregar ---
+                const urlParams = new URLSearchParams(window.location.search);
+                const textureSlug = urlParams.get('texture');
+                if (textureSlug) {
+                    const pack = texturePacksData.find(p => createSlug(p.name) === textureSlug);
+                    if (pack) openModal(pack, false); // Abre sem criar novo histórico
+                }
+
+            } catch (error) {
+                console.error("Erro ao carregar texturas:", error);
+                textureGrid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Falha ao carregar texturas</h3><p>Não foi possível buscar os dados da biblioteca.</p></div>`;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
+
+

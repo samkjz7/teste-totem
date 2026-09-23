@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luna Hub - Início</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --dark-space: #0A0A10;
+            --deep-purple: #7B42F6;
+            --light-purple: #A78BFA;
+            --glow-color: rgba(123, 66, 246, 0.2);
+            --glass-bg: rgba(18, 18, 28, 0.6);
+            --border-color: rgba(123, 66, 246, 0.2);
+            --text-primary: #EDE9FE;
+            --text-secondary: #A1A1AA;
+            --card-bg: rgba(22, 22, 34, 0.7);
+            --transition-fast: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--dark-space);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-image:
+                radial-gradient(ellipse 50% 60% at 20% 0%, var(--glow-color), transparent),
+                radial-gradient(ellipse 50% 60% at 80% 100%, var(--glow-color), transparent);
+            background-attachment: fixed;
+            overflow: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+            animation: fadeIn 0.8s 0.2s backwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header h1 {
+            font-size: clamp(2.8rem, 10vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -2px;
+            background: linear-gradient(90deg, #FFFFFF, #D1C4E9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header h1 span {
+            background: linear-gradient(90deg, var(--light-purple), var(--deep-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p {
+            color: var(--text-secondary);
+            margin-top: 10px;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            margin-bottom: 50px;
+        }
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        .hub-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: var(--transition-fast);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        .hub-card:hover:not(.disabled) {
+            transform: translateY(-10px);
+            border-color: var(--light-purple);
+            box-shadow: 0 0 30px var(--glow-color);
+        }
+        .hub-card .icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--light-purple);
+            text-shadow: 0 0 15px var(--glow-color);
+        }
+        .hub-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .hub-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .hub-card.disabled {
+            filter: grayscale(80%);
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .hub-card.disabled:hover {
+            transform: none;
+            border-color: var(--border-color);
+            box-shadow: none;
+        }
+        .soon-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; background-color: rgba(10, 10, 16, 0.5);
+            backdrop-filter: blur(4px); border-radius: 20px; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 1.8rem; font-weight: 700; color: var(--text-primary);
+            opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+        }
+        .hub-card.disabled:hover .soon-overlay { opacity: 1; }
+
+        .page-transition {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--deep-purple);
+            z-index: 9999; transform-origin: bottom; pointer-events: none;
+        }
+        .page-transition.animate-in { transform: scaleY(1); animation: slideIn 0.5s ease-in-out forwards; }
+        .page-transition.animate-out { transform: scaleY(0); animation: slideOut 0.5s ease-in-out forwards; }
+        @keyframes slideIn { from { transform: scaleY(1); transform-origin: top; } to { transform: scaleY(0); transform-origin: top; } }
+        @keyframes slideOut { from { transform: scaleY(0); transform-origin: bottom; } to { transform: scaleY(1); transform-origin: bottom; } }
+
+        .social-links { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; }
+        .social-icon {
+            display: flex; align-items: center; justify-content: center;
+            width: 50px; height: 50px; background: var(--card-bg);
+            border: 1px solid var(--border-color); border-radius: 50%; color: var(--text-secondary);
+            font-size: 1.5rem; text-decoration: none; transition: var(--transition-fast); backdrop-filter: blur(10px);
+        }
+        .social-icon:hover {
+            color: var(--text-primary); background-color: var(--deep-purple);
+            transform: translateY(-5px); box-shadow: 0 0 20px var(--glow-color); border-color: var(--light-purple);
+        }
+        @media (max-width: 480px) {
+            .social-links { bottom: 15px; right: 15px; gap: 12px; }
+            .social-icon { width: 45px; height: 45px; font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-transition" id="pageTransition"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1>Luna. <span>Hub</span></h1>
+            <p>Sua central de customização para Minecraft.</p>
+        </header>
+
+        <div class="hub-grid">
+            
+            <!-- ### BOTÃO DESBLOQUEADO AQUI ### -->
+            <a href="texture-hub.html" class="hub-card nav-link">
+                <div class="icon"><i class="fas fa-palette"></i></div>
+                <h2>Texture Hub</h2>
+                <p>Navegue em uma biblioteca de texturas totalmente grátis para mudar aparência do seu jogo.</p>
+            </a>
+            
+            <a href="totem-maker.html" class="hub-card nav-link">
+                <div class="icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+                <h2>Totem Creator</h2>
+                <p>Crie totens animados personalizados a partir de qualquer GIF em poucos segundos.</p>
+            </a>
+
+            <div class="hub-card disabled">
+                <div class="icon"><i class="fas fa-gears"></i></div>
+                <h2>Em Breve</h2>
+                <p>Novas ferramentas estão a caminho.</p>
+                <div class="soon-overlay">Em Breve</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="social-links">
+        <a href="https://www.tiktok.com/@spiritmcp" target="_blank" rel="noopener noreferrer" class="social-icon" title="TikTok">
+            <i class="fab fa-tiktok"></i>
+        </a>
+        <a href="https://discord.gg/xSgM9BbD9p" class="social-icon" title="Discord">
+            <i class="fab fa-discord"></i>
+        </a>
+    </div>
+
+    <script>
+        const pageTransition = document.getElementById('pageTransition');
+
+        window.addEventListener('load', () => {
+            pageTransition.classList.add('animate-in');
+        });
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const destination = link.href;
+                pageTransition.classList.add('animate-out');
+                setTimeout(() => {
+                    window.location.href = destination;
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luna Hub - Totem Creator</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-md5/build/md5.min.js"></script> 
+    <script src="gif.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --dark-space: #0A0A10;
+            --deep-purple: #7B42F6;
+            --light-purple: #A78BFA;
+            --glow-color: rgba(123, 66, 246, 0.2);
+            --glass-bg: rgba(18, 18, 28, 0.6);
+            --border-color: rgba(123, 66, 246, 0.2);
+            --text-primary: #EDE9FE;
+            --text-secondary: #A1A1AA;
+            --input-bg: rgba(30, 30, 45, 0.7);
+            --card-bg: rgba(22, 22, 34, 0.7);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--dark-space);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-image:
+                radial-gradient(ellipse 40% 50% at 20% 0%, var(--glow-color), transparent),
+                radial-gradient(ellipse 40% 50% at 80% 100%, var(--glow-color), transparent);
+            background-attachment: fixed;
+            overflow-y: auto;
+        }
+
+        .main-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 40px 0;
+        }
+
+        .creator-card {
+            width: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: clamp(20px, 4vw, 35px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s 0.2s backwards;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card-header { text-align: center; margin-bottom: 25px; }
+        .card-header h1 { font-size: clamp(1.8rem, 7vw, 2.3rem); font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, #FFFFFF, #D1C4E9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+        .card-header h1 span { background: linear-gradient(90deg, var(--light-purple), var(--deep-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .card-header p { color: var(--text-secondary); font-size: clamp(0.9rem, 3vw, 1rem); }
+        
+        .input-group { margin-bottom: 18px; }
+        .label-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .label-wrapper .actions { display: flex; gap: 5px; }
+        label { font-weight: 600; font-size: 0.95rem; color: var(--text-secondary); }
+
+        .file-input-wrapper {
+            position: relative; background: var(--input-bg); border: 1px dashed var(--border-color); border-radius: 12px;
+            padding: 15px; display: flex; align-items: center; cursor: pointer; transition: background-color 0.3s, border-color 0.3s;
+            min-height: 80px;
+        }
+        .file-input-wrapper:hover { background-color: rgba(30, 30, 45, 1); border-color: var(--light-purple); }
+        input[type="file"] { position: absolute; width: 100%; height: 100%; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        .file-input-wrapper img { width: 50px; height: 50px; margin-right: 15px; object-fit: contain; background: rgba(0,0,0,0.2); border-radius: 8px; flex-shrink: 0; transition: transform 0.3s ease; }
+        .file-input-wrapper img.is-flipped { transform: scaleX(-1); }
+        .file-input-text { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95rem; flex: 1; }
+        .file-input-text.selected { color: var(--text-primary); font-weight: 500; }
+        
+        input[type="text"] { width: 100%; padding: 16px; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); font-size: 1rem; font-family: 'Manrope', sans-serif; transition: border-color 0.3s, box-shadow 0.3s; }
+        input[type="text"]:focus { outline: none; border-color: var(--light-purple); box-shadow: 0 0 10px var(--glow-color); }
+        
+        .settings-btn { background: none; border: none; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; opacity: 0.5; transition: opacity 0.3s, color 0.3s; color: var(--text-secondary); border-radius: 6px; min-width: 44px; min-height: 44px; }
+        .settings-btn:hover { opacity: 1; }
+        .settings-btn.active { opacity: 1; color: var(--light-purple); }
+        .settings-btn svg, .settings-btn i { width: 22px; height: 22px; font-size: 20px; }
+
+        .number-input-wrapper { display: flex; align-items: center; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s; }
+        .number-input-wrapper:focus-within { border-color: var(--light-purple); box-shadow: 0 0 10px var(--glow-color); }
+        input[type="number"] { width: 100%; padding: 16px; background: none; border: none; color: var(--text-primary); font-size: 1rem; font-family: 'Manrope', sans-serif; -moz-appearance: textfield; text-align: center; }
+        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"]:focus { outline: none; }
+        .num-btn { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: none; padding: 0 20px; font-size: 1.5rem; font-weight: 600; cursor: pointer; align-self: stretch; transition: background-color 0.3s, color 0.3s; touch-action: manipulation; min-height: 60px; }
+        .num-btn:hover { background: var(--deep-purple); color: white; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 16, 0.5); backdrop-filter: blur(8px);
+            z-index: 2000; display: flex; justify-content: center; align-items: center;
+            padding: 20px; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.is-open { opacity: 1; visibility: visible; }
+        
+        .modal-content {
+            position: relative; width: 100%; max-width: 500px;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 30px;
+            transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .modal-overlay.is-open .modal-content { transform: scale(1); }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 1.5rem; }
+        .close-modal-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; transition: color 0.3s; padding: 5px; line-height: 1; }
+        .close-modal-btn:hover { color: var(--text-primary); }
+
+        .position-settings { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .slider-group { display: flex; align-items: center; gap: 15px; }
+        .slider-group label { flex-basis: 30px; font-weight: 700; color: var(--text-primary); }
+        .slider-group input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: var(--input-bg); border-radius: 5px; outline: none; transition: background 0.3s; }
+        .slider-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: var(--light-purple); cursor: pointer; border-radius: 50%; border: 3px solid var(--dark-space); }
+        .slider-group input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; background: var(--light-purple); cursor: pointer; border-radius: 50%; border: 3px solid var(--dark-space); }
+        .slider-value { font-weight: 600; color: var(--text-secondary); min-width: 45px; text-align: right; }
+
+        .download-btn { width: 100%; padding: 18px; margin-top: 25px; background: var(--deep-purple); color: var(--text-primary); border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; text-decoration: none; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 0 20px rgba(123, 66, 246, 0.4); min-height: 60px; display: flex; align-items: center; justify-content: center; }
+        .download-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 0 30px rgba(123, 66, 246, 0.6); }
+        .download-btn:disabled { background: #333; color: #777; cursor: not-allowed; box-shadow: none; }
+        
+        #status { text-align: center; margin-top: 20px; min-height: 22px; color: var(--light-purple); font-weight: 500; transition: color 0.3s; font-size: 0.95rem; padding: 0 10px; }
+        
+        .page-transition { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--deep-purple); z-index: 9999; transform-origin: bottom; pointer-events: none; }
+        .page-transition.animate-in { transform: scaleY(1); animation: slideIn 0.5s ease-in-out forwards; }
+        .page-transition.animate-out { transform: scaleY(0); animation: slideOut 0.5s ease-in-out forwards; }
+        @keyframes slideIn { from { transform: scaleY(1); transform-origin: top; } to { transform: scaleY(0); transform-origin: top; } }
+        @keyframes slideOut { from { transform: scaleY(0); transform-origin: bottom; } to { transform: scaleY(1); transform-origin: bottom; } }
+
+        .back-to-hub { position: fixed; bottom: 25px; left: 25px; background: var(--deep-purple); color: var(--text-primary); padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; z-index: 1001; box-shadow: 0 0 20px rgba(123, 66, 246, 0.4); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+        .back-to-hub:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(123, 66, 246, 0.6); }
+
+        .social-links { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; }
+        .social-icon { display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 50%; color: var(--text-secondary); font-size: 1.5rem; text-decoration: none; transition: all 0.4s ease; backdrop-filter: blur(10px); }
+        .social-icon:hover { color: var(--text-primary); background-color: var(--deep-purple); transform: translateY(-5px); box-shadow: 0 0 20px var(--glow-color); border-color: var(--light-purple); }
+        
+        #historyPanel, #fpsPreviewContainer {
+            position: absolute; top: 0; left: calc(100% + 20px); width: 300px;
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 20px; z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease; transform: translateX(20px);
+            display: flex; flex-direction: column;
+        }
+        #historyPanel { max-height: 80vh; }
+        #historyPanel.is-visible, #fpsPreviewContainer.is-visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
+        
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .history-header h3 { font-size: 1.2rem; }
+        #clearHistoryBtn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.8rem; text-decoration: underline; }
+        #historyList { list-style: none; overflow-y: auto; flex-grow: 1; }
+        .history-item { display: flex; align-items: center; gap: 15px; padding: 10px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        .history-item:hover { background-color: var(--input-bg); }
+        .history-item img { width: 40px; height: 40px; border-radius: 6px; object-fit: contain; flex-shrink: 0; }
+        .history-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #noHistoryMessage { text-align: center; color: var(--text-secondary); padding: 20px 0; }
+        
+        #closePreviewBtn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; transition: color 0.2s; }
+        #closePreviewBtn:hover { color: var(--text-primary); }
+        #gifCanvas { width: 100%; border-radius: 8px; background-color: var(--input-bg); }
+
+        @media (max-width: 1000px) {
+             #historyPanel, #fpsPreviewContainer {
+                position: static; transform: none; width: auto; margin-top: 20px;
+             }
+             #historyPanel { max-height: 300px; }
+             #historyPanel.is-visible, #fpsPreviewContainer.is-visible { transform: none; }
+        }
+        @media (max-width: 480px) { .back-to-hub { padding: 10px 15px; font-size: 0.9rem; bottom: 15px; left: 15px; } .social-links { bottom: 15px; right: 15px; gap: 12px; } .social-icon { width: 45px; height: 45px; font-size: 1.3rem; } }
+    </style>
+</head>
+<body>
+    <div class="page-transition" id="pageTransition"></div>
+    <a href="index.html" class="back-to-hub nav-link"><i class="fas fa-arrow-left"></i> Voltar ao Hub</a>
+
+    <div class="main-wrapper">
+        <div class="creator-card">
+            <div class="card-header">
+                <h1>Luna <span>Totem Creator</span></h1>
+                <p>Crie totens animados (GIF) ou estáticos (PNG/JPG).</p>
+            </div>
+
+            <div class="input-group">
+                <div class="label-wrapper">
+                    <label>1. Escolha GIF ou Imagem</label>
+                    <div class="actions">
+                        <button class="settings-btn" id="flipBtn" title="Inverter Imagem/GIF"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="margin-left: -10px; margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg></button>
+                        <button class="settings-btn" id="openSettingsBtn" title="Configurações de Posição (Apenas GIF)"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995s.145.755.438.995l1.003.827c.424.35.534.954.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.437-.995s-.145-.755-.437-.995l-1.004-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button>
+                        <button class="settings-btn" id="historyBtn" title="Histórico de Criações"><i class="fas fa-history"></i></button>
+                    </div>
+                </div>
+                <div class="file-input-wrapper"><input type="file" id="gifFile" accept=".gif, .png, .jpg, .jpeg"><img id="gifPreview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Preview"><span id="gifFileName" class="file-input-text">Clique para selecionar um arquivo...</span></div>
+            </div>
+            <div class="input-group">
+                <label>2. Escolha o Ícone do Pacote (PNG)</label>
+                <div class="file-input-wrapper"><input type="file" id="packIcon" accept=".png"><img id="iconPreview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Icon Preview"><span id="iconFileName" class="file-input-text">Clique para selecionar um arquivo...</span></div>
+            </div>
+            <div class="input-group"><label for="packName">3. Dê um nome ao Pacote</label><input type="text" id="packName" placeholder="Ex: MeuTotem"></div>
+            <div class="input-group">
+                <div class="label-wrapper">
+                    <label for="packFps">4. Defina o FPS (Apenas para GIF)</label>
+                    <button class="settings-btn" id="previewFpsBtn" title="Pré-visualizar"><i class="fas fa-eye"></i></button>
+                </div>
+                <div class="number-input-wrapper">
+                    <button class="num-btn" id="fps-decrement">-</button><input type="number" id="packFps" value="20" min="1" max="120"><button class="num-btn" id="fps-increment">+</button>
+                </div>
+            </div>
+            <button id="downloadBtn" class="download-btn" disabled>Preencha todos os campos</button>
+            <div id="status"></div>
+        </div>
+
+        <div id="historyPanel">
+            <div class="history-header"><h3>Histórico</h3><button id="clearHistoryBtn">Limpar</button></div>
+            <ul id="historyList"><li id="noHistoryMessage">Nenhum totem salvo ainda.</li></ul>
+        </div>
+        
+        <div id="fpsPreviewContainer">
+            <button id="closePreviewBtn">&times;</button>
+            <canvas id="gifCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settingsModal"><div class="modal-content"><div class="modal-header"><h2>Posição do Totem (1ª Pessoa)</h2><button class="close-modal-btn" id="closeSettingsBtn">&times;</button></div><div class="position-settings"><div class="slider-group"><label for="posX">X</label><input type="range" id="posX" min="-40" max="0" value="-23" step="0.1"><span class="slider-value" id="posXValue">-23.0</span></div><div class="slider-group"><label for="posY">Y</label><input type="range" id="posY" min="-10" max="20" value="6.8" step="0.1"><span class="slider-value" id="posYValue">6.8</span></div><div class="slider-group"><label for="posZ">Z</label><input type="range" id="posZ" min="0" max="20" value="11" step="0.1"><span class="slider-value" id="posZValue">11.0</span></div><div class="slider-group"><label for="scale">Escala</label><input type="range" id="scale" min="1" max="8" value="3.2" step="0.1"><span class="slider-value" id="scaleValue">3.2</span></div></div></div></div>
+    <div class="social-links"><a href="https://www.tiktok.com/@spiritmcp" target="_blank" rel="noopener noreferrer" class="social-icon" title="TikTok"><i class="fab fa-tiktok"></i></a><a href="#" class="social-icon" title="Discord"><i class="fab fa-discord"></i></a></div>
+
+    <script>
+        // --- TEMPLATES DE TEXTO BRUTO ---
+        const manifestTemplate=`{"format_version":2,"header":{"name":"__PACK_NAME__","description":"§5 §lpowered by Luna. / spiritmcp on tiktok","uuid":"__UUID_1__","version":[0,0,1],"min_engine_version":[1,21,0]},"modules":[{"description":"§5 §lorodo on Top / spiritmcp on tiktok","type":"resources","uuid":"__UUID_2__","version":[0,0,1]}]}`;const totemTemplate=`{"format_version":"1.10.0","minecraft:attachable":{"description":{"identifier":"minecraft:totem_of_undying","materials":{"default":"entity_alphatest","enchanted":"entity_alphatest_glint"},"textures":{__TEXTURE_LIST__"enchanted":"textures/misc/enchanted_item_glint"},"geometry":{"default":"geometry.vm"},"animations":{"wield":"animation.leftblock.first_person_wield"},"scripts":{"animate":["wield"]},"render_controllers":["controller.render.item_animation_totem"]}}}`;const renderControllerTemplate=`{"format_version":"1.10","render_controllers":{"controller.render.item_animation_totem":{"arrays":{"textures":{"array.item_frames":[__FRAME_ARRAY__]}},"geometry":"Geometry.default","materials":[{"*":"variable.is_enchanted ? material.enchanted : material.default"}],"textures":["temp.life_time = query.life_time * __FPS_VALUE__; return array.item_frames[temp.life_time];","texture.enchanted"]}}}`;const animationTemplate=`{"format_version":"1.10.0","animations":{"animation.leftblock.first_person_wield":{"loop":true,"bones":{"leftitem":{"rotation":["c.is_first_person?-15.0:100.0","c.is_first_person?30.0:20.0","c.is_first_person?4.0:80.0"],"position":["c.is_first_person?__POS_X__:-6.2","c.is_first_person?__POS_Y__:7.0","c.is_first_person?__POS_Z__:4.0"],"scale":["c.is_first_person?__SCALE__:5","c.is_first_person?__SCALE__:5","c.is_first_person?__SCALE__:5"]}}}}}`;const geoTemplate=`{"format_version":"1.16.0","minecraft:geometry":[{"description":{"identifier":"geometry.vm","texture_width":32,"texture_height":32,"visible_bounds_width":15,"visible_bounds_height":5,"visible_bounds_offset":[0,0.5,0]},"bones":[{"name":"leftitem","pivot":[0,0,0],"cubes":[{"origin":[2,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.01,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.02,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.03,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.04,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.05,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.06,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.07,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.08,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.09,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}},{"origin":[2.1,0,0],"size":[0,2,2],"uv":{"north":{"uv":[11,11],"uv_size":[2,2]},"east":{"uv":[32,32],"uv_size":[-1,-1]},"south":{"uv":[9,11],"uv_size":[2,2]},"west":{"uv":[0,0],"uv_size":[32,32]},"up":{"uv":[20,12],"uv_size":[-2,-12]},"down":{"uv":[22,12],"uv_size":[-2,-12]}}}]}]}]}`;
+        
+        // --- LÓGICA PRINCIPAL DA APLICAÇÃO ---
+        const gifFileInput=document.getElementById("gifFile"),packIconInput=document.getElementById("packIcon"),packNameInput=document.getElementById("packName"),packFpsInput=document.getElementById("packFps"),downloadBtn=document.getElementById("downloadBtn"),statusDiv=document.getElementById("status"),gifPreview=document.getElementById("gifPreview"),iconPreview=document.getElementById("iconPreview"),gifFileName=document.getElementById("gifFileName"),iconFileName=document.getElementById("iconFileName"),flipBtn=document.getElementById("flipBtn"),fpsDecrementBtn=document.getElementById("fps-decrement"),fpsIncrementBtn=document.getElementById("fps-increment"),settingsModal=document.getElementById("settingsModal"),openSettingsBtn=document.getElementById("openSettingsBtn"),closeSettingsBtn=document.getElementById("closeSettingsBtn"),posXSlider=document.getElementById("posX"),posYSlider=document.getElementById("posY"),posZSlider=document.getElementById("posZ"),scaleSlider=document.getElementById("scale"),posXValue=document.getElementById("posXValue"),posYValue=document.getElementById("posYValue"),posZValue=document.getElementById("posZValue"),scaleValue=document.getElementById("scaleValue");
+        const historyBtn = document.getElementById('historyBtn'), historyPanel = document.getElementById('historyPanel'), historyList = document.getElementById('historyList'), noHistoryMessage = document.getElementById('noHistoryMessage'), clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const previewFpsBtn = document.getElementById('previewFpsBtn'), fpsPreviewContainer = document.getElementById('fpsPreviewContainer'), closePreviewBtn = document.getElementById('closePreviewBtn'), gifCanvas = document.getElementById('gifCanvas');
+        
+        let extractedFrames=null, isFlipped=false, currentGifFile = null, currentIconFile = null;
+        let previewAnimationId=null, isPreviewing=false;
+        let isAnimated = false; // Flag para saber se é GIF ou Estático
+
+        // --- LÓGICA DO INDEXEDDB ---
+        const DB_NAME = 'TotemCreatorDB', STORE_NAME = 'history';
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = event => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                request.onsuccess = event => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                request.onerror = event => reject('Erro ao abrir o IndexedDB:', event.target.errorCode);
+            });
+        }
+
+        async function saveToHistory(entry) {
+            if (!db) return;
+            try {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.add(entry);
+                request.onsuccess = () => renderHistory();
+                
+                const countRequest = store.count();
+                countRequest.onsuccess = () => {
+                    if (countRequest.result > 20) {
+                        const cursorRequest = store.openCursor();
+                        cursorRequest.onsuccess = e => {
+                            const cursor = e.target.result;
+                            if (cursor) {
+                                cursor.delete();
+                            }
+                        };
+                    }
+                };
+            } catch (error) {
+                console.error("Não foi possível salvar no histórico:", error);
+            }
+        }
+        
+        async function getHistory() {
+            return new Promise((resolve) => {
+                if (!db) return resolve([]);
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result.reverse());
+            });
+        }
+
+        async function clearHistory() {
+            if (!db) return;
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.clear();
+            request.onsuccess = () => renderHistory();
+        }
+
+        // --- LÓGICA DA INTERFACE ---
+        const validateInputs = () => { const allFilled = extractedFrames && extractedFrames.length > 0 && currentIconFile && packNameInput.value.trim() !== '' && packFpsInput.value.trim() !== ''; downloadBtn.disabled = !allFilled; downloadBtn.textContent = allFilled ? 'Criar e Baixar .mcpack' : 'Preencha todos os campos'; };
+        
+        const handleGifUpload = async (file) => {
+            if (!file) return;
+            currentGifFile = file;
+            gifPreview.src = URL.createObjectURL(file); gifFileName.textContent = file.name; gifFileName.classList.add('selected');
+            statusDiv.textContent = 'Processando arquivo...'; statusDiv.style.color = 'var(--light-purple)';
+            
+            try {
+                if (file.type === 'image/gif') {
+                    // Lógica para GIF Animado
+                    isAnimated = true;
+                    statusDiv.textContent = 'Analisando GIF...';
+                    const frames = await extractGifFrames(file); 
+                    extractedFrames = frames; 
+                    statusDiv.textContent = `GIF carregado (${frames.length} frames)`;
+                    openSettingsBtn.style.opacity = "1";
+                    openSettingsBtn.style.pointerEvents = "auto";
+                } else {
+                    // Lógica para Imagem Estática (PNG, JPG)
+                    isAnimated = false;
+                    statusDiv.textContent = 'Carregando imagem...';
+                    const dataUrl = await fileToDataURL(file);
+                    extractedFrames = [dataUrl]; // Trata como array de 1 frame
+                    statusDiv.textContent = `Imagem estática carregada`;
+                    openSettingsBtn.style.opacity = "0.3"; // Desativa configurações de posição para estático
+                    openSettingsBtn.style.pointerEvents = "none";
+                }
+            } catch (error) { 
+                const errorMessage = error.message || "Tente um arquivo menor.";
+                statusDiv.textContent = `Erro ao processar: ${errorMessage}`; 
+                statusDiv.style.color = '#f87171'; 
+                extractedFrames = null; 
+            }
+            validateInputs();
+        };
+        
+        const handleIconUpload = (file) => {
+            if (!file) return;
+            currentIconFile = file;
+            iconPreview.src = URL.createObjectURL(file);
+            iconFileName.textContent = file.name;
+            iconFileName.classList.add('selected');
+            validateInputs();
+        };
+
+        gifFileInput.addEventListener('change', () => handleGifUpload(gifFileInput.files[0]));
+        packIconInput.addEventListener('change', () => handleIconUpload(packIconInput.files[0]));
+        packNameInput.addEventListener('keyup', validateInputs); packFpsInput.addEventListener('change', validateInputs);
+        flipBtn.addEventListener('click', () => { isFlipped = !isFlipped; flipBtn.classList.toggle('active', isFlipped); gifPreview.classList.toggle('is-flipped', isFlipped); });
+        fpsDecrementBtn.addEventListener('click', () => { packFpsInput.stepDown(); validateInputs(); });
+        fpsIncrementBtn.addEventListener('click', () => { packFpsInput.stepUp(); validateInputs(); });
+        
+        openSettingsBtn.addEventListener('click', () => { if(isAnimated) settingsModal.classList.add('is-open'); });
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('is-open'));
+        settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.remove('is-open'); });
+
+        const updateSliderValue = (slider, display) => { display.textContent = parseFloat(slider.value).toFixed(1); };
+        posXSlider.addEventListener('input', () => updateSliderValue(posXSlider, posXValue));
+        posYSlider.addEventListener('input', () => updateSliderValue(posYSlider, posYValue));
+        posZSlider.addEventListener('input', () => updateSliderValue(posZSlider, posZValue));
+        scaleSlider.addEventListener('input', () => updateSliderValue(scaleSlider, scaleValue));
+
+        historyBtn.addEventListener('click', () => {
+            fpsPreviewContainer.classList.remove('is-visible');
+            historyPanel.classList.toggle('is-visible');
+        });
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja limpar todo o histórico?')) {
+                clearHistory();
+            }
+        });
+        
+        async function renderHistory() {
+            const history = await getHistory();
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                historyList.appendChild(noHistoryMessage);
+            } else {
+                history.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'history-item';
+                    li.innerHTML = `<img src="${item.iconDataUrl}" alt="ícone"><span>${item.name}</span>`;
+                    li.addEventListener('click', () => loadFromHistory(item.id));
+                    historyList.appendChild(li);
+                });
+            }
+        }
+
+        async function loadFromHistory(id) {
+            if (!db) return;
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(id);
+
+            request.onsuccess = async () => {
+                const item = request.result;
+                if (!item) return;
+                
+                packNameInput.value = item.name;
+                packFpsInput.value = item.fps;
+                
+                // Determina o tipo com base no cabeçalho do DataURL ou assume GIF para compatibilidade antiga
+                let type = "image/gif";
+                if (item.gifDataUrl.startsWith("data:image/png")) type = "image/png";
+                if (item.gifDataUrl.startsWith("data:image/jpeg")) type = "image/jpeg";
+                if (item.gifDataUrl.startsWith("data:image/jpg")) type = "image/jpeg";
+
+                const gifBlob = dataURLtoBlob(item.gifDataUrl);
+                const iconBlob = dataURLtoBlob(item.iconDataUrl);
+
+                await handleGifUpload(new File([gifBlob], `history_file`, {type: type}));
+                handleIconUpload(new File([iconBlob], "history_icon.png", {type: "image/png"}));
+
+                historyPanel.classList.remove('is-visible');
+            };
+        }
+
+        function startPreview() {
+            if (!extractedFrames || extractedFrames.length === 0) { alert("Por favor, carregue um arquivo primeiro."); return; }
+            historyPanel.classList.remove('is-visible');
+            isPreviewing = true;
+            fpsPreviewContainer.classList.add('is-visible');
+            const ctx = gifCanvas.getContext('2d');
+            const frameImages = extractedFrames.map(src => { const img = new Image(); img.src = src; return img; });
+            let frameIndex = 0, lastTime = 0;
+            
+            // Se for estático, desenha apenas uma vez
+            if (!isAnimated && frameImages.length > 0) {
+                 const img = frameImages[0];
+                 img.onload = () => {
+                     gifCanvas.width = img.width; gifCanvas.height = img.height;
+                     ctx.clearRect(0, 0, gifCanvas.width, gifCanvas.height); 
+                     ctx.drawImage(img, 0, 0);
+                 }
+                 return;
+            }
+
+            function animatePreview(timestamp) {
+                if (!isPreviewing) return;
+                const fps = parseFloat(packFpsInput.value) || 20, interval = 1000 / fps, deltaTime = timestamp - lastTime;
+                if (deltaTime > interval) {
+                    lastTime = timestamp - (deltaTime % interval);
+                    const img = frameImages[frameIndex];
+                    if (img && img.complete && img.naturalWidth > 0) { // Garante que a imagem carregou
+                        if (gifCanvas.width !== img.width || gifCanvas.height !== img.height) { gifCanvas.width = img.width; gifCanvas.height = img.height; }
+                        ctx.clearRect(0, 0, gifCanvas.width, gifCanvas.height); ctx.drawImage(img, 0, 0);
+                        frameIndex = (frameIndex + 1) % frameImages.length;
+                    }
+                }
+                previewAnimationId = requestAnimationFrame(animatePreview);
+            }
+            cancelAnimationFrame(previewAnimationId);
+            animatePreview(0);
+        }
+
+        function stopPreview() {
+            isPreviewing = false;
+            fpsPreviewContainer.classList.remove('is-visible');
+            if (previewAnimationId) { cancelAnimationFrame(previewAnimationId); previewAnimationId = null; }
+        }
+        
+        previewFpsBtn.addEventListener('click', startPreview);
+        closePreviewBtn.addEventListener('click', stopPreview);
+
+        async function extractGifFrames(gifFile) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const gif = new GIF(e.target.result); const framesData = gif.decompressFrames(true); const hdr = gif.hdr;
+                        if (!framesData || framesData.length === 0 || !hdr) reject(new Error("GIF inválido ou corrompido."));
+                        
+                        const fullCanvas = document.createElement('canvas'); fullCanvas.width = hdr.width; fullCanvas.height = hdr.height;
+                        const fullCtx = fullCanvas.getContext('2d');
+                        const processedFrames = [];
+                        
+                        for (const frame of framesData) {
+                            if (frame.disposal === 2) { fullCtx.clearRect(0, 0, hdr.width, hdr.height); }
+                            const frameCanvas = document.createElement('canvas'); frameCanvas.width = frame.dims.width; frameCanvas.height = frame.dims.height;
+                            const frameCtx = frameCanvas.getContext('2d'); const imageData = frameCtx.createImageData(frame.dims.width, frame.dims.height);
+                            imageData.data.set(frame.patch);
+                            frameCtx.putImageData(imageData, 0, 0);
+                            fullCtx.drawImage(frameCanvas, frame.dims.left, frame.dims.top);
+                            processedFrames.push(fullCanvas.toDataURL('image/png'));
+                        }
+                        resolve(processedFrames);
+                    } catch (error) { reject(error); }
+                };
+                reader.onerror = reject; reader.readAsArrayBuffer(gifFile);
+            });
+        }
+        
+        async function flipFrames(framesToFlip) {
+            const flipPromises = framesToFlip.map(frameDataUrl => new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+                    const ctx = canvas.getContext('2d'); ctx.translate(img.width, 0); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = reject; img.src = frameDataUrl;
+            }));
+            return Promise.all(flipPromises);
+        }
+        
+        // --- FUNÇÃO PARA REDIMENSIONAR E CENTRALIZAR (APENAS ESTÁTICOS) ---
+        async function processStaticImage(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const scaleFactor = 1.5;
+                    
+                    // Calcula novas dimensões (1.5x)
+                    const newWidth = Math.floor(img.width * scaleFactor);
+                    const newHeight = Math.floor(img.height * scaleFactor);
+                    
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+                    
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Centraliza a imagem original
+                    const x = (newWidth - img.width) / 2;
+                    const y = (newHeight - img.height) / 2;
+                    
+                    // Desenha
+                    ctx.drawImage(img, x, y);
+                    
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = reject;
+                img.src = dataUrl;
+            });
+        }
+
+        function fileToDataURL(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); }
+        function dataURLtoBlob(dataurl) { const [header, base64] = dataurl.split(','); const mime = header.match(/:(.*?);/)[1]; const bstr = atob(base64); let n = bstr.length; const u8arr = new Uint8Array(n); while (n--) { u8arr[n] = bstr.charCodeAt(n); } return new Blob([u8arr], { type: mime }); }
+        
+        downloadBtn.addEventListener('click', async () => {
+            statusDiv.textContent = 'Iniciando...'; statusDiv.style.color = 'var(--light-purple)'; downloadBtn.disabled = true;
+            try {
+                if (currentGifFile && currentIconFile) {
+                    try {
+                        const historyEntry = {
+                            name: packNameInput.value,
+                            fps: packFpsInput.value,
+                            gifDataUrl: await fileToDataURL(currentGifFile),
+                            iconDataUrl: await fileToDataURL(currentIconFile)
+                        };
+                        await saveToHistory(historyEntry);
+                    } catch (error) {
+                        console.error("Não foi possível salvar no histórico, mas o download continuará:", error);
+                    }
+                }
+                
+                let framesToProcess = extractedFrames;
+                if (isFlipped) { statusDiv.textContent = 'Invertendo...'; framesToProcess = await flipFrames(extractedFrames); }
+
+                statusDiv.textContent = 'Gerando arquivos...';
+                const packNameSanitized = packNameInput.value.trim().replace(/[^a-zA-Z0-9_]/g, '_');
+                const manifestContent = manifestTemplate.trim().replace('__PACK_NAME__', `${packNameInput.value.trim()} by §5Luna`).replace('__UUID_1__', crypto.randomUUID()).replace('__UUID_2__', crypto.randomUUID());
+                const watermark = "powered by Luna.";
+                const zip = new JSZip();
+
+                if (isAnimated) {
+                    // --- GERAÇÃO DE PACOTE ANIMADO (Complexo) ---
+                    const frameCount = framesToProcess.length;
+                    const fps = parseFloat(packFpsInput.value) || 20.0;
+                    
+                    let textureList = ''; let frameArray = '';
+                    for (let i = 1; i <= frameCount; i++) {
+                        textureList += `"item_frame_${i}":"textures/item/item${i}",`;
+                        frameArray += `"texture.item_frame_${i}"${i === frameCount ? '' : ','}`;
+                    }
+                    
+                    const totemContent = totemTemplate.trim().replace('__TEXTURE_LIST__', textureList);
+                    const renderControllerContent = renderControllerTemplate.trim().replace('__FRAME_ARRAY__', frameArray).replace('__FPS_VALUE__', `${fps.toFixed(1)}`);
+                    const animationContent = animationTemplate.trim()
+                        .replace('__POS_X__', parseFloat(posXSlider.value).toFixed(1))
+                        .replace('__POS_Y__', parseFloat(posYSlider.value).toFixed(1))
+                        .replace('__POS_Z__', parseFloat(posZSlider.value).toFixed(1))
+                        .replace(/__SCALE__/g, parseFloat(scaleSlider.value).toFixed(1));
+
+                    statusDiv.textContent = 'Compactando animação...';
+
+                    zip.file('animations/vleftblock.animation.json', animationContent); zip.file('animations/' + watermark, '');
+                    zip.file('attachables/totem.json', totemContent); zip.file('attachables/' + watermark, '');
+                    zip.file('models/entity/vm.geo.json', geoTemplate); zip.file('models/entity/' + watermark, '');
+                    zip.file('render_controllers/item_animation.render_controllers.json', renderControllerContent); zip.file('render_controllers/' + watermark, '');
+                    
+                    const itemFolder = zip.folder('textures/item'); itemFolder.file(watermark, '');
+                    for (let i = 0; i < frameCount; i++) { itemFolder.file(`item${i + 1}.png`, dataURLtoBlob(framesToProcess[i]), { base64: true }); }
+
+                    // Ícone do item no inventário (frame 1)
+                    zip.file('textures/items/totem.png', dataURLtoBlob(framesToProcess[0]), { base64: true }); zip.file('textures/items/' + watermark, '');
+
+                } else {
+                    // --- GERAÇÃO DE PACOTE ESTÁTICO (Tradicional / Simples / 1.5x Scale) ---
+                    statusDiv.textContent = 'Redimensionando imagem (1.5x)...';
+                    
+                    // Pega o frame atual (já invertido se o usuário escolheu inverter)
+                    const sourceFrame = framesToProcess[0];
+                    
+                    // Processa: Cria canvas 1.5x maior e centraliza
+                    const resizedFrameUrl = await processStaticImage(sourceFrame);
+                    
+                    // Adiciona na pasta tradicional
+                    zip.file('textures/items/totem.png', dataURLtoBlob(resizedFrameUrl), { base64: true }); 
+                    zip.file('textures/items/' + watermark, '');
+                }
+
+                // Arquivos comuns
+                zip.file('manifest.json', manifestContent); 
+                zip.file('pack_icon.png', currentIconFile);
+
+                statusDiv.textContent = 'Finalizando...';
+                const content = await zip.generateAsync({ type: 'blob' });
+                const link = document.createElement('a'); link.href = URL.createObjectURL(content); link.download = `${packNameSanitized || 'totem_luna'}.mcpack`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                
+                statusDiv.textContent = `Pacote '${link.download}' criado com sucesso!`;
+                statusDiv.style.color = '#4ade80';
+
+            } catch (error) {
+                console.error(error);
+                const errorMessage = error.message || "Ocorreu um erro desconhecido.";
+                statusDiv.textContent = `Erro: ${errorMessage}`;
+                statusDiv.style.color = '#f87171';
+            } finally {
+                 validateInputs();
+            }
+        });
+        
+        const pageTransition = document.getElementById('pageTransition');
+        window.addEventListener('load', async () => { 
+            pageTransition.classList.add('animate-in');
+            try {
+                await initDB();
+                renderHistory();
+            } catch (error) {
+                console.error("Falha ao iniciar o banco de dados do histórico:", error);
+            }
+        });
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault(); const destination = link.href;
+                pageTransition.classList.add('animate-out');
+                setTimeout(() => { window.location.href = destination; }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
